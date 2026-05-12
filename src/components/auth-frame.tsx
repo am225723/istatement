@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import { LOGO_DATA_URL } from '@/lib/logoData';
 
 export function AuthFrame({ children, mode }: { children: React.ReactNode; mode: 'sign-in' | 'sign-up' }) {
   return (
@@ -7,7 +7,7 @@ export function AuthFrame({ children, mode }: { children: React.ReactNode; mode:
         <section className="relative flex flex-col justify-between bg-[#f7f4ee] p-8 md:p-12">
           <div>
             <div className="mx-auto max-w-[260px] rounded-[2rem] bg-white/60 p-4 shadow-soft">
-              <Image src="/its-logo.svg" alt="Intrinsic Therapeutic Solutions" width={260} height={386} priority className="h-auto w-full" />
+              <img src={LOGO_DATA_URL} alt="Intrinsic Therapeutic Solutions" className="h-auto w-full rounded-2xl" />
             </div>
             <div className="mt-8 text-center lg:text-left">
               <p className="text-xs font-black uppercase tracking-[0.28em] text-rose">Intrinsic Therapeutic Solutions</p>
