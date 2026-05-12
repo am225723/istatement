@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { HeartHandshake, History, JournalText, MessageCircle, Paperclip, Sparkles } from 'lucide-react';
+import { FileText, HeartHandshake, History, MessageCircle, Paperclip, Sparkles } from 'lucide-react';
 import { UploadPanel } from './upload-panel';
 
 type Tab = 'builder' | 'roleplay' | 'journal' | 'history' | 'files';
@@ -9,7 +9,7 @@ type Tab = 'builder' | 'roleplay' | 'journal' | 'history' | 'files';
 const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: 'builder', label: 'I-Statement Builder', icon: Sparkles },
   { id: 'roleplay', label: 'Roleplay', icon: MessageCircle },
-  { id: 'journal', label: 'Journal', icon: JournalText },
+  { id: 'journal', label: 'Journal', icon: FileText },
   { id: 'history', label: 'History', icon: History },
   { id: 'files', label: 'Files', icon: Paperclip }
 ];
@@ -162,6 +162,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function Output({ title, text }: { title: string; text: string }) {
   return <div className="rounded-3xl border border-plum/10 bg-gradient-to-br from-lavender to-blush p-6"><h3 className="text-xl font-black">{title}</h3><pre className="mt-4 whitespace-pre-wrap font-sans leading-7 text-slate-700">{text}</pre></div>;
 }
-function List({ title, items }: { title: string; items: { title: string; body: string; date?: string }[] }) {
-  return <div><PanelTitle title={title} subtitle={`${items.length} saved item${items.length === 1 ? '' : 's'}.`} /><div className="mt-5 space-y-3">{items.length === 0 && <p className="rounded-2xl bg-white p-5 text-slate-500">Nothing saved yet.</p>}{items.map((item, i)=><article key={i} className="rounded-2xl bg-white p-5 shadow-sm"><div className="flex flex-wrap justify-between gap-2"><h3 className="font-black text-plum">{item.title}</h3>{item.date && <time className="text-xs text-slate-400">{new Date(item.date).toLocaleString()}</time>}</div><p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-700">{item.body}</p></article>)}</div></div>;
+function List({ title, items }: { title: string; body: string; date?: string }[] | any) {
+  return <div><PanelTitle title={title} subtitle={`${items.length} saved item${items.length === 1 ? '' : 's'}.`} /><div className="mt-5 space-y-3">{items.length === 0 && <p className="rounded-2xl bg-white p-5 text-slate-500">Nothing saved yet.</p>}{items.map((item: any, i: number)=><article key={i} className="rounded-2xl bg-white p-5 shadow-sm"><div className="flex flex-wrap justify-between gap-2"><h3 className="font-black text-plum">{item.title}</h3>{item.date && <time className="text-xs text-slate-400">{new Date(item.date).toLocaleString()}</time>}</div><p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-700">{item.body}</p></article>)}</div></div>;
 }
