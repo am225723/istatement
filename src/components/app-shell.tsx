@@ -5,6 +5,7 @@ import { FileText, HeartHandshake, History, MessageCircle, Paperclip, Sparkles }
 import { UploadPanel } from './upload-panel';
 
 type Tab = 'builder' | 'roleplay' | 'journal' | 'history' | 'files';
+type BuilderMode = 'structured' | 'raw';
 
 const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: 'builder', label: 'I-Statement Builder', icon: Sparkles },
@@ -16,6 +17,7 @@ const tabs: { id: Tab; label: string; icon: any }[] = [
 
 export function AppShell() {
   const [tab, setTab] = useState<Tab>('builder');
+  const [builderMode, setBuilderMode] = useState<BuilderMode>('structured');
   const [raw, setRaw] = useState('You never listen to me when I talk about something important.');
   const [feeling, setFeeling] = useState('hurt');
   const [situation, setSituation] = useState('I am sharing something important and do not feel heard');
@@ -50,10 +52,13 @@ export function AppShell() {
     setLoading(true);
     setReply('');
     try {
+      const payload = builderMode === 'raw'
+        ? { mode: 'statement', raw, feeling: '', situation: '', because: '', request: '', scenario, tone, firmness }
+        : { mode: 'statement', raw, feeling, situation, because, request, scenario, tone, firmness };
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: 'statement', raw, feeling, situation, because, request, scenario, tone, firmness })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'AI request failed');
@@ -102,21 +107,51 @@ export function AppShell() {
       <section className="rounded-3xl bg-white/85 p-5 shadow-soft backdrop-blur md:p-8">
         {tab === 'builder' && (
           <div className="grid gap-6 lg:grid-cols-2">
-            <div className="space-y-4">
-              <PanelTitle title="Build an I-statement" subtitle="Convert reactive conflict language into clear, compassionate requests." />
-              <Field label="Raw message"><textarea value={raw} onChange={e=>setRaw(e.target.value)} className="h-24 w-full rounded-2xl border p-3" /></Field>
+            <div className="space-y-5">
+              <PanelTitle title="Build an I-statement" subtitle="Choose a structured path or simply type the raw message you really want to say." />
+
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Feeling"><input value={feeling} onChange={e=>setFeeling(e.target.value)} className="w-full rounded-2xl border p-3" /></Field>
-                <Field label="Scenario"><select value={scenario} onChange={e=>setScenario(e.target.value)} className="w-full rounded-2xl border p-3"><option>relationship</option><option>family</option><option>friendship</option><option>workplace</option><option>roommate</option></select></Field>
+                <ModeCard
+                  active={builderMode === 'structured'}
+                  title="Structured I-Statement"
+                  description="Use guided fields: feeling, situation, impact, and request."
+                  onClick={() => setBuilderMode('structured')}
+                />
+                <ModeCard
+                  active={builderMode === 'raw'}
+                  title="Raw Message"
+                  description="Type what you really want to say and let AI reframe it."
+                  onClick={() => setBuilderMode('raw')}
+                />
               </div>
-              <Field label="Situation"><input value={situation} onChange={e=>setSituation(e.target.value)} className="w-full rounded-2xl border p-3" /></Field>
-              <Field label="Because / impact"><input value={because} onChange={e=>setBecause(e.target.value)} className="w-full rounded-2xl border p-3" /></Field>
-              <Field label="Request"><input value={request} onChange={e=>setRequest(e.target.value)} className="w-full rounded-2xl border p-3" /></Field>
+
+              {builderMode === 'raw' ? (
+                <Field label="What do you really want to say?">
+                  <textarea
+                    value={raw}
+                    onChange={e=>setRaw(e.target.value)}
+                    placeholder="Type the unfiltered message here. The app will help turn it into a grounded I-statement."
+                    className="h-48 w-full rounded-2xl border p-4 text-base"
+                  />
+                </Field>
+              ) : (
+                <>
+                  <Field label="Raw message, optional"><textarea value={raw} onChange={e=>setRaw(e.target.value)} className="h-24 w-full rounded-2xl border p-3" /></Field>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Field label="Feeling"><input value={feeling} onChange={e=>setFeeling(e.target.value)} className="w-full rounded-2xl border p-3" /></Field>
+                    <Field label="Scenario"><select value={scenario} onChange={e=>setScenario(e.target.value)} className="w-full rounded-2xl border p-3"><option>relationship</option><option>family</option><option>friendship</option><option>workplace</option><option>roommate</option></select></Field>
+                  </div>
+                  <Field label="Situation"><input value={situation} onChange={e=>setSituation(e.target.value)} className="w-full rounded-2xl border p-3" /></Field>
+                  <Field label="Because / impact"><input value={because} onChange={e=>setBecause(e.target.value)} className="w-full rounded-2xl border p-3" /></Field>
+                  <Field label="Request"><input value={request} onChange={e=>setRequest(e.target.value)} className="w-full rounded-2xl border p-3" /></Field>
+                </>
+              )}
+
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="Tone"><select value={tone} onChange={e=>setTone(e.target.value)} className="w-full rounded-2xl border p-3"><option>empathetic</option><option>assertive</option><option>professional</option><option>neutral</option></select></Field>
                 <Field label={`Firmness: ${firmness}`}><input type="range" min="0" max="100" value={firmness} onChange={e=>setFirmness(Number(e.target.value))} className="w-full" /></Field>
               </div>
-              <button onClick={generate} disabled={loading} className="w-full rounded-2xl bg-rose px-5 py-4 font-black text-white shadow-soft disabled:opacity-60">{loading ? 'Generating...' : 'Generate with AI'}</button>
+              <button onClick={generate} disabled={loading} className="w-full rounded-2xl bg-rose px-5 py-4 font-black text-white shadow-soft disabled:opacity-60">{loading ? 'Generating...' : builderMode === 'raw' ? 'Reframe raw message' : 'Generate structured I-statement'}</button>
             </div>
             <Output title="AI coaching output" text={reply || 'Your refined I-statement will appear here.'} />
           </div>
@@ -153,6 +188,14 @@ export function AppShell() {
   );
 }
 
+function ModeCard({ active, title, description, onClick }: { active: boolean; title: string; description: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className={`rounded-3xl border p-5 text-left transition ${active ? 'border-rose bg-blush shadow-soft' : 'border-slate-200 bg-white hover:border-rose/40'}`}>
+      <span className="text-lg font-black text-ink">{title}</span>
+      <span className="mt-2 block text-sm leading-6 text-slate-600">{description}</span>
+    </button>
+  );
+}
 function PanelTitle({ title, subtitle }: { title: string; subtitle: string }) {
   return <div><h2 className="text-3xl font-black text-ink">{title}</h2><p className="mt-2 text-slate-600">{subtitle}</p></div>;
 }
