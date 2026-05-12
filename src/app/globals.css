@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0; background: linear-gradient(135deg,#fff7fa 0%,#f5f0ff 55%,#eef8ff 100%); color: #1d1b2f; }
+textarea, input, select { outline: none; }
+.proseish h3 { font-weight: 800; margin-top: 1rem; }
+.proseish ul { list-style: disc; padding-left: 1.25rem; }
+.proseish ol { list-style: decimal; padding-left: 1.25rem; }
