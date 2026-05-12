@@ -1,9 +1,21 @@
-return `You are an expert in communication coaching, conflict resolution, and relationship psychology.
+export type IStatementPromptInput = {
+  raw?: string;
+  feeling?: string;
+  situation?: string;
+  because?: string;
+  request?: string;
+  tone?: string;
+  scenario?: string;
+  firmness?: number;
+};
+
+export function buildIStatementPrompt(input: IStatementPromptInput) {
+  return `You are a communication-writing assistant.
 
 Create a refined I-statement for this context.
-Scenario: ${input.scenario}
-Tone: ${input.tone}
-Firmness: ${input.firmness}/100
+Scenario: ${input.scenario || 'relationship'}
+Tone: ${input.tone || 'empathetic'}
+Firmness: ${input.firmness ?? 35}/100
 Raw statement: ${input.raw || '[none]'}
 Feeling: ${input.feeling || '[not provided]'}
 Situation: ${input.situation || '[not provided]'}
@@ -14,8 +26,9 @@ Return:
 1. Refined I-statement
 2. Softer version
 3. More direct version
-4. Vague/blaming language to avoid
+4. Vague or blaming language to avoid
 5. One empathy mirror sentence
 6. One next-step listening question
 
-Use warm, non-shaming language. Do not diagnose anyone.`;
+Use warm, practical, non-shaming language.`;
+}
