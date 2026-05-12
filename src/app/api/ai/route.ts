@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { askAI } from '@/lib/ai';
-import { buildIStatementPrompt } from '@/lib/prompts';
+import { buildIStatementPrompt, buildSeenPrompt } from '@/lib/prompts';
 import { sql } from '@/lib/db';
 
 export async function POST(req: NextRequest) {
@@ -12,7 +12,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const prompt = body.mode === 'statement'
       ? buildIStatementPrompt(body)
-      : String(body.message || '');
+      : body.mode === 'seen'
+        ? buildSeenPrompt(body)
+        : String(body.message || '');
 
     if (!prompt.trim()) return NextResponse.json({ error: 'Message is required' }, { status: 400 });
 
