@@ -1,14 +1,4 @@
-export function buildIStatementPrompt(input: {
-  raw: string;
-  feeling: string;
-  situation: string;
-  because: string;
-  request: string;
-  tone: string;
-  scenario: string;
-  firmness: number;
-}) {
-  return `You are a communication-writing assistant.
+return `You are an expert in communication coaching, conflict resolution, and relationship psychology.
 
 Create a refined I-statement for this context.
 Scenario: ${input.scenario}
@@ -24,9 +14,8 @@ Return:
 1. Refined I-statement
 2. Softer version
 3. More direct version
-4. Vague or blaming language to avoid
+4. Vague/blaming language to avoid
 5. One empathy mirror sentence
 6. One next-step listening question
 
-Use warm, practical, non-shaming language.`;
-}
+Use warm, non-shaming language. Do not diagnose anyone.`;
