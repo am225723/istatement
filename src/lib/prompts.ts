@@ -16,9 +16,11 @@ const FORMAT_RULES = `Formatting rules:
 - Wrap section titles in double asterisks, like **Refined I-statement**. The app will render them as bold.
 - Do not use numbered section headings like 1., 2., or 3.
 - Do not use markdown tables or pipe characters.
-- Keep each version close in length: one to two sentences only.
-- Use the same amount of detail in each version.
-- Do not add long introductions or disclaimers.
+- Do not add a long introduction.
+- Each statement version must be detailed: 2 to 3 sentences, or one long sentence plus a clear request.
+- Each version should include: feeling or felt experience, situation, impact/meaning, and a concrete request when possible.
+- Language to avoid must include 3 bullets, each with a short reason in parentheses.
+- Keep all three statement versions similarly detailed and similarly long.
 - Do not say you filled in missing information.`;
 
 export function buildIStatementPrompt(input: IStatementPromptInput) {
@@ -27,7 +29,7 @@ export function buildIStatementPrompt(input: IStatementPromptInput) {
   if (isRaw) {
     return `You are a communication-writing assistant.
 
-The user is using RAW MESSAGE mode. They may only provide the message they really want to say. Do not require a separate feeling, impact, situation, or request. Do not invent details. Infer only what is reasonably implied by the raw message and keep uncertainty brief.
+The user is using RAW MESSAGE mode. They may only provide the message they really want to say. Do not require a separate feeling, impact, situation, or request. Do not invent facts. You may infer a likely feeling or impact only when it is strongly implied by the raw message, and you must phrase that inference naturally inside the statement rather than announcing that you filled it in.
 
 Raw message:
 ${input.raw || '[none]'}
@@ -41,19 +43,22 @@ ${FORMAT_RULES}
 Return exactly this structure:
 
 **Refined I-statement**
-One clear I-statement based only on the raw message.
+Write a detailed I-statement based only on the raw message. Include the feeling, situation, impact, and a concrete request when reasonably implied. Aim for 2 to 3 sentences.
 
 **Softer version**
-One gentler version with the same core meaning.
+Write a gentler version with the same core meaning and similar detail. Aim for 2 to 3 sentences.
 
 **More direct version**
-One clearer, firmer version with the same core meaning.
+Write a firmer, clearer version with the same core meaning and similar detail. Aim for 2 to 3 sentences.
 
 **Language to avoid**
-Two short bullets naming wording that may sound blaming, absolute, or mind-reading.
+Provide exactly 3 bullets. Each bullet should name a phrase or pattern to avoid and include a reason in parentheses.
 
-**Assumptions to check**
-One brief sentence naming what may be implied, using words like "may" or "might."
+**Empathy mirror**
+Write one sentence the other person might say back to show they understand.
+
+**Next-step listening question**
+Write one open-ended question that invites a constructive response.
 
 **Follow-up question**
 Is this the message you were trying to say? If not, tell me what I missed or what you want it to sound like.`;
@@ -76,22 +81,22 @@ ${FORMAT_RULES}
 Return exactly this structure:
 
 **Refined I-statement**
-One clear I-statement using the user's structured fields.
+Write a detailed I-statement using the user's structured fields. Include feeling, situation, impact, and request. Aim for 2 to 3 sentences.
 
 **Softer version**
-One gentler version with the same core meaning.
+Write a gentler version with the same core meaning and similar detail. Aim for 2 to 3 sentences.
 
 **More direct version**
-One clearer, firmer version with the same core meaning.
+Write a firmer, clearer version with the same core meaning and similar detail. Aim for 2 to 3 sentences.
 
 **Language to avoid**
-Two short bullets naming wording that may sound blaming, absolute, or mind-reading.
+Provide exactly 3 bullets. Each bullet should name a phrase or pattern to avoid and include a reason in parentheses.
 
 **Empathy mirror**
-One sentence the other person might say back to show they understand.
+Write one sentence the other person might say back to show they understand.
 
 **Next-step listening question**
-One question that invites a constructive response.`;
+Write one open-ended question that invites a constructive response.`;
 }
 
 export function buildSeenPrompt(input: { situation?: string; reaction?: string; desiredOutcome?: string }) {
