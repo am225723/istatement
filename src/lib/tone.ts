@@ -10,16 +10,16 @@ export type ToneResult = {
 export const TONE_COLORS: Record<string, string> = {
   calm: '#AEC6CF', reassuring: '#77AADD', empathetic: '#66CDAA', compassionate: '#98FB98', cooperative: '#5DBB63', curious: '#FDFD96', assertive: '#FFD700',
   anxious: '#FFA500', impatient: '#FF8C00', sad: '#6B8E9F', angry: '#CD5C5C', frustrated: '#FF7F50', defensive: '#D2691E',
-  'passive-aggressive': '#E09F3E', sarcastic: '#DAA520', dismissive: '#FF6347', judgmental: '#FF4500', blaming: '#FF0000', confrontational: '#DC143C', aggressive: '#B22222', hostile: '#8B0000', neutral: '#B0B0B0'
+  'passive-aggressive': '#E09F3E', sarcastic: '#DAA520', dismissive: '#FF6347', judgmental: '#FF4500', blaming: '#FF0000', confrontational: '#DC143C', aggressive: '#B22222', hostile: '#8B0000', profanity: '#B22222', neutral: '#B0B0B0'
 };
 
 export const TONE_DESCRIPTIONS: Record<string, string> = {
   calm: 'Soft, steady', reassuring: 'Stable, supportive', empathetic: 'Understanding, gentle', compassionate: 'Caring, kind', cooperative: 'Collaborative, workable', curious: 'Open, interested', assertive: 'Clear, confident',
   anxious: 'Worried, activated', impatient: 'Rushed, restless', sad: 'Heavy, tender', angry: 'Heated, upset', frustrated: 'Irritated, stuck', defensive: 'Guarded, protective',
-  'passive-aggressive': 'Indirect, tense', sarcastic: 'Biting, indirect', dismissive: 'Rejecting, minimizing', judgmental: 'Critical, evaluative', blaming: 'Fault-focused', confrontational: 'Challenging, intense', aggressive: 'Forceful, attacking', hostile: 'Threatening, unsafe', neutral: 'Even, unclear'
+  'passive-aggressive': 'Indirect, tense', sarcastic: 'Biting, indirect', dismissive: 'Rejecting, minimizing', judgmental: 'Critical, evaluative', blaming: 'Fault-focused', confrontational: 'Challenging, intense', aggressive: 'Forceful, attacking', hostile: 'Threatening, unsafe', profanity: 'Intensified language', neutral: 'Even, unclear'
 };
 
-const RED = ['blaming', 'judgmental', 'dismissive', 'sarcastic', 'passive-aggressive', 'confrontational', 'aggressive', 'hostile'];
+const RED = ['blaming', 'judgmental', 'dismissive', 'sarcastic', 'passive-aggressive', 'confrontational', 'aggressive', 'hostile', 'profanity'];
 const YELLOW = ['anxious', 'impatient', 'sad', 'angry', 'frustrated', 'defensive', 'assertive'];
 
 export function toneZone(tone: string): ToneResult['zone'] {
@@ -42,6 +42,7 @@ export function repairCueForTone(tone: string) {
     impatient: 'Try: “I want to resolve this, and I also want us to slow down.”',
     confrontational: 'Soften the opening. Start with what matters to you rather than what is wrong.',
     aggressive: 'Pause. Switch to one feeling and one request before continuing.',
+    profanity: 'The language is getting intensified. Try pausing and restarting with one feeling and one request.',
     hostile: 'This may need a break. Consider pausing the conversation until both people feel safer.',
     curious: 'Good moment to ask one open-ended question and listen.',
     empathetic: 'Good repair tone. Stay with reflection and validation.',
@@ -52,11 +53,36 @@ export function repairCueForTone(tone: string) {
   return cues[t] || 'Try naming one feeling, one impact, and one request.';
 }
 
+function hasProfanity(text: string) {
+  const normalized = text
+    .toLowerCase()
+    .replace(/[!?.:,;]/g, ' ')
+    .replace(/[@$0]/g, (char) => ({ '@': 'a', '$': 's', '0': 'o' }[char] || char))
+    .replace(/[1!]/g, 'i')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const compact = normalized.replace(/[^a-z*#]+/g, '');
+
+  const explicit = /\b(fuck|fucking|fucked|fucker|shit|bullshit|asshole|ass|bitch|bastard|dick|piss|crap|damn|hell)\b/i.test(normalized);
+  const censored = /(f\W*[*#-]+\W*k|f\W*u\W*c\W*k|s\W*[*#-]+\W*t|b\W*[*#-]+\W*h|a\W*[*#-]+\W*hole|\*{2,})/i.test(text);
+  const compactProfanity = /(f+u+c+k+|s+h+i+t+|b+i+t+c+h+|a+s+s+h+o+l+e+)/i.test(compact);
+
+  return explicit || censored || compactProfanity;
+}
+
+function hasDirectedProfanity(text: string) {
+  const lower = text.toLowerCase();
+  return /(you\s+(are|'re)?\s*(a\s*)?(fucking|fuckin|damn|stupid|idiot|asshole|bitch|dick)|shut\s+the\s+fuck\s+up|fuck\s+you|go\s+to\s+hell|what\s+the\s+fuck|what\s+is\s+wrong\s+with\s+you)/i.test(lower);
+}
+
 export function analyzeToneLocally(text: string): ToneResult {
   if (!text || text.trim().length === 0) return buildTone('neutral', 0.2);
 
   const lower = text.toLowerCase();
+  if (hasDirectedProfanity(text)) return buildTone('aggressive', 0.92);
   if (/(hate|destroy|die|kill)/i.test(text)) return buildTone('hostile', 0.9);
+  if (hasProfanity(text)) return buildTone('profanity', 0.88);
   if (/(shut up|stupid|idiot|damn|hell)/i.test(text)) return buildTone('aggressive', 0.85);
   if (/(what's wrong with you|seriously\?|are you kidding)/i.test(text)) return buildTone('confrontational', 0.8);
   if (/(your fault|you did|you never|you always|you made me)/i.test(text)) return buildTone('blaming', 0.85);
