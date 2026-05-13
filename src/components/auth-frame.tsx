@@ -15,21 +15,21 @@ export function AuthFrame({ children, mode }: { children: React.ReactNode; mode:
                 Practice saying the hard thing with clarity and care.
               </h1>
               <p className="mt-5 text-lg leading-8 text-slate-600">
-                Build a structured I-statement or start with the raw message you wish you could say. The app helps turn it into something grounded, direct, and compassionate.
+                Build a structured I-statement, start with the raw message you wish you could say, or use the SEEN method to understand what is underneath the reaction.
               </p>
             </div>
           </div>
           <div className="mt-10 grid gap-3 text-sm text-slate-600 sm:grid-cols-3">
             <div className="rounded-2xl bg-white/75 p-4"><b className="block text-plum">Structured</b> Feelings, situation, impact, request.</div>
             <div className="rounded-2xl bg-white/75 p-4"><b className="block text-plum">Raw message</b> Say what you really want to say first.</div>
-            <div className="rounded-2xl bg-white/75 p-4"><b className="block text-plum">Private workspace</b> Saved under your secure sign-in.</div>
+            <div className="rounded-2xl bg-white/75 p-4"><b className="block text-plum">SEEN Method</b> Scared, embarrassed, expectations, need.</div>
           </div>
         </section>
         <section className="flex items-center justify-center p-6 md:p-10">
           <div className="w-full max-w-md">
             <div className="mb-6 text-center">
               <h2 className="text-3xl font-black text-ink">{mode === 'sign-in' ? 'Welcome back' : 'Create your account'}</h2>
-              <p className="mt-2 text-slate-500">{mode === 'sign-in' ? 'Sign in to continue your communication practice.' : 'Start your secure communication workspace.'}</p>
+              <p className="mt-2 text-slate-500">{mode === 'sign-in' ? 'Sign in to continue your communication practice.' : 'Start your communication workspace.'}</p>
             </div>
             {children}
           </div>
