@@ -58,6 +58,7 @@ export function AppShell() {
     setLoading(true);
     setReply('');
     setChat([]);
+    setSeenReply('');
     try {
       const payload = builderMode === 'raw'
         ? { mode: 'statement', builderMode: 'raw', raw, scenario, tone, firmness }
@@ -87,6 +88,7 @@ export function AppShell() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'AI request failed');
       setReply(data.reply || '');
+      setSeenReply('');
       setChat(prev => [...prev, { role: 'ai', text: 'I updated the message with your clarification. Is this closer?' }]);
     } catch (e: any) {
       setChat(prev => [...prev, { role: 'ai', text: `Error: ${e.message}` }]);
@@ -94,10 +96,23 @@ export function AppShell() {
   }
 
   async function generateSeen() {
+    const source = reply?.trim()
+      ? `Analyze this generated I-statement and build the SEEN insight from it:\n\n${reply}\n\nOptional extra context from the user:\n${seenSituation || '[none provided]'}`
+      : seenSituation;
+
+    if (!source?.trim()) {
+      setSeenReply('Generate an I-statement first, or enter what happened so SEEN has something to analyze.');
+      return;
+    }
+
     setSeenLoading(true);
     setSeenReply('');
     try {
-      const res = await fetch('/api/ai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: 'seen', situation: seenSituation, reaction: seenReaction, desiredOutcome: seenOutcome }) });
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'seen', situation: source, reaction: seenReaction, desiredOutcome: seenOutcome })
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'AI request failed');
       setSeenReply(data.reply || '');
@@ -155,10 +170,10 @@ export function AppShell() {
             <div className="grid gap-3 sm:grid-cols-2"><Field label="Tone"><select value={tone} onChange={e=>setTone(e.target.value)} className="w-full rounded-2xl border p-3"><option>empathetic</option><option>assertive</option><option>professional</option><option>neutral</option></select></Field><Field label={`Firmness: ${firmness}`}><input type="range" min="0" max="100" value={firmness} onChange={e=>setFirmness(Number(e.target.value))} className="w-full" /></Field></div>
             <button onClick={generate} disabled={loading} className="w-full rounded-2xl bg-rose px-5 py-4 font-black text-white shadow-soft disabled:opacity-60">{loading ? 'Generating...' : builderMode === 'raw' ? 'Reframe raw message' : 'Generate I-statement'}</button>
           </div>
-          <div className="space-y-4"><Output title="AI coaching output" text={reply || 'Your refined I-statement will appear here.'} />{reply && <ChatBox chat={chat} followUp={followUp} setFollowUp={setFollowUp} sendFollowUp={sendFollowUp} loading={loading} />}</div>
+          <div className="space-y-4"><Output title="AI coaching output" text={reply || 'Your refined I-statement will appear here.'} />{reply && <><button onClick={() => setTab('seen')} className="w-full rounded-2xl bg-ink px-5 py-3 font-black text-white">Use SEEN on this I-statement</button><ChatBox chat={chat} followUp={followUp} setFollowUp={setFollowUp} sendFollowUp={sendFollowUp} loading={loading} /></>}</div>
         </div>}
 
-        {tab === 'seen' && <div className="grid gap-5 lg:grid-cols-2 lg:gap-6"><div className="space-y-4"><PanelTitle title="SEEN Method" subtitle="Look beneath the reaction: Scared, Embarrassed, Expectations, Need." /><InfoCard /><Field label="What happened?"><textarea value={seenSituation} onChange={e=>setSeenSituation(e.target.value)} className="h-28 w-full rounded-2xl border p-3" /></Field><Field label="What was your reaction?"><textarea value={seenReaction} onChange={e=>setSeenReaction(e.target.value)} className="h-24 w-full rounded-2xl border p-3" /></Field><Field label="What do you want to happen next?"><input value={seenOutcome} onChange={e=>setSeenOutcome(e.target.value)} className="w-full rounded-2xl border p-3" /></Field><button onClick={generateSeen} disabled={seenLoading} className="w-full rounded-2xl bg-ink px-5 py-4 font-black text-white disabled:opacity-60">{seenLoading ? 'Thinking...' : 'Analyze with SEEN'}</button></div><Output title="SEEN insight" text={seenReply || 'Your SEEN breakdown will appear here.'} /></div>}
+        {tab === 'seen' && <div className="grid gap-5 lg:grid-cols-2 lg:gap-6"><div className="space-y-4"><PanelTitle title="SEEN Method" subtitle="Analyze the latest I-statement through Scared, Embarrassed, Expectations, and Need." /><InfoCard />{reply && <div className="rounded-3xl bg-blush p-4 text-sm leading-6 text-slate-700"><b className="text-plum">Latest I-statement selected</b><p className="mt-2">SEEN will use the most recently generated I-statement as its main source.</p></div>}<Field label="Optional extra context"><textarea value={seenSituation} onChange={e=>setSeenSituation(e.target.value)} placeholder="Add anything else SEEN should know, or leave this blank if the I-statement has enough context." className="h-28 w-full rounded-2xl border p-3" /></Field><Field label="What was your reaction? Optional"><textarea value={seenReaction} onChange={e=>setSeenReaction(e.target.value)} className="h-24 w-full rounded-2xl border p-3" /></Field><Field label="What do you want to happen next? Optional"><input value={seenOutcome} onChange={e=>setSeenOutcome(e.target.value)} className="w-full rounded-2xl border p-3" /></Field><button onClick={generateSeen} disabled={seenLoading} className="w-full rounded-2xl bg-ink px-5 py-4 font-black text-white disabled:opacity-60">{seenLoading ? 'Thinking...' : reply ? 'Analyze latest I-statement with SEEN' : 'Analyze with SEEN'}</button></div><Output title="SEEN insight" text={seenReply || 'Generate an I-statement first, then tap “Analyze latest I-statement with SEEN.”'} /></div>}
 
         {tab === 'roleplay' && <div className="grid gap-5 lg:grid-cols-2"><div className="space-y-4"><PanelTitle title="Roleplay delivery" subtitle="Practice how a partner might respond and rehearse staying grounded." /><Field label="Partner response style"><select value={partnerStyle} onChange={e=>setPartnerStyle(e.target.value)} className="w-full rounded-2xl border p-3"><option>supportive</option><option>curious</option><option>defensive</option><option>dismissive</option></select></Field><div className="rounded-3xl bg-lavender p-5"><p className="font-black">Partner says:</p><p className="mt-2 text-slate-700">{roleplayReply}</p></div><div className="rounded-3xl bg-blush p-5"><p className="font-black">Coaching cue:</p><p className="mt-2 text-slate-700">Breathe, validate one part of what they said, then return to one specific request.</p></div></div><Output title="Your latest AI statement" text={reply || 'Generate a statement first, then practice saying it here.'} /></div>}
 
