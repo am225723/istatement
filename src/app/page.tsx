@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { SignedIn, SignedOut } from '@clerk/nextjs';
-import { Database, Eye, LockKeyhole, MessageSquareText, Sparkles, UploadCloud } from 'lucide-react';
+import { Eye, MessageSquareText, Sparkles } from 'lucide-react';
 import { LOGO_DATA_URL } from '@/lib/logoData';
 
 export default function Home() {
@@ -18,7 +18,7 @@ export default function Home() {
                 Turn the message you want to say into one you can say with clarity.
               </h1>
               <p className="mt-6 text-lg leading-8 text-slate-600">
-                Clients can build a structured I-statement, paste a raw message, use the SEEN method, practice roleplay, journal reflections, and save helpful communication work securely.
+                Build a structured I-statement, paste a raw message, use the SEEN method, practice roleplay, and journal reflections in a supportive communication workspace.
               </p>
             </div>
           </div>
@@ -39,13 +39,10 @@ export default function Home() {
             <p className="text-sm font-black uppercase tracking-[0.22em] text-rose">Communication tools</p>
             <h2 className="mt-3 text-3xl font-black text-ink md:text-4xl">Choose the path that fits the moment.</h2>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Feature icon={MessageSquareText} title="Structured I-Statement" text="Guided fields for feeling, situation, impact, and request." />
+          <div className="grid gap-4">
+            <Feature icon={MessageSquareText} title="Structured I-Statement" text="Use guided fields for feeling, situation, impact, and request." />
             <Feature icon={Sparkles} title="Raw Message" text="Type what you really want to say and let AI help reframe it without requiring extra fields." />
             <Feature icon={Eye} title="SEEN Method" text="Explore Scared, Embarrassed, Expectations, and Need with AI support." />
-            <Feature icon={Database} title="Neon saved history" text="Saved statements and journal entries are stored in Postgres." />
-            <Feature icon={UploadCloud} title="UploadThing file vault" text="Upload helpful files while Neon stores the metadata." />
-            <Feature icon={LockKeyhole} title="Clerk secure sign-in" text="Each client has their own protected workspace." />
           </div>
         </div>
       </section>
