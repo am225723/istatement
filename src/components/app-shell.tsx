@@ -1,14 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Eye, FileText, HeartHandshake, History, MessageCircle, Sparkles } from 'lucide-react';
+import { Eye, FileText, HeartHandshake, History, MessageCircle, Radio, Sparkles } from 'lucide-react';
+import { LiveTonePanel } from './live-tone-panel';
 
-type Tab = 'builder' | 'seen' | 'roleplay' | 'journal' | 'history';
+type Tab = 'builder' | 'seen' | 'live' | 'roleplay' | 'journal' | 'history';
 type BuilderMode = 'structured' | 'raw';
 
 const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: 'builder', label: 'I-Statement', icon: Sparkles },
   { id: 'seen', label: 'SEEN', icon: Eye },
+  { id: 'live', label: 'Live', icon: Radio },
   { id: 'roleplay', label: 'Roleplay', icon: MessageCircle },
   { id: 'journal', label: 'Journal', icon: FileText },
   { id: 'history', label: 'History', icon: History }
@@ -175,6 +177,8 @@ export function AppShell() {
 
         {tab === 'seen' && <div className="grid gap-5 lg:grid-cols-2 lg:gap-6"><div className="space-y-4"><PanelTitle title="SEEN Method" subtitle="Analyze the latest I-statement through Scared, Embarrassed, Expectations, and Need." /><InfoCard />{reply && <div className="rounded-3xl bg-blush p-4 text-sm leading-6 text-slate-700"><b className="text-plum">Latest I-statement selected</b><p className="mt-2">SEEN will use the most recently generated I-statement as its main source.</p></div>}<Field label="Optional extra context"><textarea value={seenSituation} onChange={e=>setSeenSituation(e.target.value)} placeholder="Add anything else SEEN should know, or leave this blank if the I-statement has enough context." className="h-28 w-full rounded-2xl border p-3" /></Field><Field label="What was your reaction? Optional"><textarea value={seenReaction} onChange={e=>setSeenReaction(e.target.value)} className="h-24 w-full rounded-2xl border p-3" /></Field><Field label="What do you want to happen next? Optional"><input value={seenOutcome} onChange={e=>setSeenOutcome(e.target.value)} className="w-full rounded-2xl border p-3" /></Field><button onClick={generateSeen} disabled={seenLoading} className="w-full rounded-2xl bg-ink px-5 py-4 font-black text-white disabled:opacity-60">{seenLoading ? 'Thinking...' : reply ? 'Analyze latest I-statement with SEEN' : 'Analyze with SEEN'}</button></div><Output title="SEEN insight" text={seenReply || 'Generate an I-statement first, then tap “Analyze latest I-statement with SEEN.”'} /></div>}
 
+        {tab === 'live' && <LiveTonePanel />}
+
         {tab === 'roleplay' && <div className="grid gap-5 lg:grid-cols-2"><div className="space-y-4"><PanelTitle title="Roleplay delivery" subtitle="Practice how a partner might respond and rehearse staying grounded." /><Field label="Partner response style"><select value={partnerStyle} onChange={e=>setPartnerStyle(e.target.value)} className="w-full rounded-2xl border p-3"><option>supportive</option><option>curious</option><option>defensive</option><option>dismissive</option></select></Field><div className="rounded-3xl bg-lavender p-5"><p className="font-black">Partner says:</p><p className="mt-2 text-slate-700">{roleplayReply}</p></div><div className="rounded-3xl bg-blush p-5"><p className="font-black">Coaching cue:</p><p className="mt-2 text-slate-700">Breathe, validate one part of what they said, then return to one specific request.</p></div></div><Output title="Your latest AI statement" text={reply || 'Generate a statement first, then practice saying it here.'} /></div>}
 
         {tab === 'journal' && <div className="grid gap-5 lg:grid-cols-2"><div className="space-y-4"><PanelTitle title="Conflict journal" subtitle="Save reflections for later review." /><Field label="Title"><input value={journalTitle} onChange={e=>setJournalTitle(e.target.value)} className="w-full rounded-2xl border p-3" /></Field><Field label="Entry"><textarea value={journalBody} onChange={e=>setJournalBody(e.target.value)} className="h-48 w-full rounded-2xl border p-3" /></Field><button onClick={saveJournal} className="w-full rounded-2xl bg-ink px-5 py-3 font-black text-white sm:w-auto">Save journal entry</button></div><List title="Recent journal entries" items={journal.map(j => ({ title: j.title || 'Untitled', body: j.body, date: j.created_at }))} /></div>}
@@ -182,7 +186,7 @@ export function AppShell() {
       </section>
 
       <nav className="fixed inset-x-3 bottom-3 z-50 rounded-[1.75rem] border border-white/70 bg-white/95 p-2 shadow-soft backdrop-blur lg:hidden">
-        <div className="grid grid-cols-5 gap-1">
+        <div className="grid grid-cols-6 gap-1">
           {tabs.map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => setTab(id)} className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-black transition ${tab === id ? 'bg-ink text-white' : 'text-plum'}`}>
               <Icon className="h-4 w-4" />
