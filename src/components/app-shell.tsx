@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Eye, FileText, HeartHandshake, History, MessageCircle, Paperclip, Sparkles } from 'lucide-react';
-import { UploadPanel } from './upload-panel';
+import { Eye, FileText, HeartHandshake, History, MessageCircle, Sparkles } from 'lucide-react';
 
-type Tab = 'builder' | 'seen' | 'roleplay' | 'journal' | 'history' | 'files';
+type Tab = 'builder' | 'seen' | 'roleplay' | 'journal' | 'history';
 type BuilderMode = 'structured' | 'raw';
 
 const tabs: { id: Tab; label: string; icon: any }[] = [
@@ -12,13 +11,12 @@ const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: 'seen', label: 'SEEN', icon: Eye },
   { id: 'roleplay', label: 'Roleplay', icon: MessageCircle },
   { id: 'journal', label: 'Journal', icon: FileText },
-  { id: 'history', label: 'History', icon: History },
-  { id: 'files', label: 'Files', icon: Paperclip }
+  { id: 'history', label: 'History', icon: History }
 ];
 
 export function AppShell() {
   const [tab, setTab] = useState<Tab>('builder');
-  const [builderMode, setBuilderMode] = useState<BuilderMode>('structured');
+  const [builderMode, setBuilderMode] = useState<BuilderMode>('raw');
   const [raw, setRaw] = useState('You never listen to me when I talk about something important.');
   const [feeling, setFeeling] = useState('hurt');
   const [situation, setSituation] = useState('I am sharing something important and do not feel heard');
@@ -26,7 +24,7 @@ export function AppShell() {
   const [request, setRequest] = useState('we slow down, reflect back what we heard, and ask one question before responding');
   const [scenario, setScenario] = useState('relationship');
   const [tone, setTone] = useState('empathetic');
-  const [firmness, setFirmness] = useState(35);
+  const [firmness, setFirmness] = useState(50);
   const [reply, setReply] = useState('');
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
@@ -84,7 +82,7 @@ export function AppShell() {
     try {
       const res = await fetch('/api/ai', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: `The user is refining an I-statement. Previous AI output:\n${reply}\n\nUser clarification:\n${userMessage}\n\nRevise the I-statement using the same section format. End by asking if the revision is closer to what they meant.` })
+        body: JSON.stringify({ message: `The user is refining an I-statement. Previous AI output:\n${reply}\n\nUser clarification:\n${userMessage}\n\nRevise the I-statement using the same section format and the same level of detail. End by asking if the revision is closer to what they meant.` })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'AI request failed');
@@ -127,16 +125,14 @@ export function AppShell() {
   }, [partnerStyle]);
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-4 md:gap-6 lg:grid-cols-[240px_1fr]">
-      <aside className="rounded-3xl bg-white/85 p-3 shadow-soft backdrop-blur lg:sticky lg:top-6 lg:self-start">
-        <div className="mb-2 hidden items-center gap-2 px-3 py-2 font-black text-plum lg:flex"><HeartHandshake className="h-5 w-5" /> Tools</div>
-        <div className="flex gap-2 overflow-x-auto pb-1 lg:block lg:overflow-visible lg:pb-0">
-          {tabs.map(({ id, label, icon: Icon }) => (
-            <button key={id} onClick={() => setTab(id)} className={`flex min-w-max items-center gap-2 rounded-2xl px-4 py-3 text-sm font-black transition lg:mb-2 lg:w-full lg:text-left ${tab === id ? 'bg-ink text-white' : 'bg-white text-plum hover:bg-lavender lg:bg-transparent'}`}>
-              <Icon className="h-4 w-4" /> {label}
-            </button>
-          ))}
-        </div>
+    <div className="mx-auto grid max-w-7xl gap-4 pb-24 lg:grid-cols-[230px_1fr] lg:pb-0">
+      <aside className="hidden rounded-3xl bg-white/85 p-3 shadow-soft backdrop-blur lg:sticky lg:top-6 lg:block lg:self-start">
+        <div className="mb-2 flex items-center gap-2 px-3 py-2 font-black text-plum"><HeartHandshake className="h-5 w-5" /> Tools</div>
+        {tabs.map(({ id, label, icon: Icon }) => (
+          <button key={id} onClick={() => setTab(id)} className={`mb-2 flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-black transition ${tab === id ? 'bg-ink text-white' : 'text-plum hover:bg-lavender'}`}>
+            <Icon className="h-4 w-4" /> {label}
+          </button>
+        ))}
       </aside>
 
       <section className="rounded-3xl bg-white/90 p-4 shadow-soft backdrop-blur sm:p-5 md:p-8">
@@ -168,8 +164,18 @@ export function AppShell() {
 
         {tab === 'journal' && <div className="grid gap-5 lg:grid-cols-2"><div className="space-y-4"><PanelTitle title="Conflict journal" subtitle="Save reflections for later review." /><Field label="Title"><input value={journalTitle} onChange={e=>setJournalTitle(e.target.value)} className="w-full rounded-2xl border p-3" /></Field><Field label="Entry"><textarea value={journalBody} onChange={e=>setJournalBody(e.target.value)} className="h-48 w-full rounded-2xl border p-3" /></Field><button onClick={saveJournal} className="w-full rounded-2xl bg-ink px-5 py-3 font-black text-white sm:w-auto">Save journal entry</button></div><List title="Recent journal entries" items={journal.map(j => ({ title: j.title || 'Untitled', body: j.body, date: j.created_at }))} /></div>}
         {tab === 'history' && <List title="Saved AI statements" items={history.map(h => ({ title: `${h.scenario} / ${h.tone}`, body: h.refined_text, date: h.created_at }))} />}
-        {tab === 'files' && <UploadPanel />}
       </section>
+
+      <nav className="fixed inset-x-3 bottom-3 z-50 rounded-[1.75rem] border border-white/70 bg-white/95 p-2 shadow-soft backdrop-blur lg:hidden">
+        <div className="grid grid-cols-5 gap-1">
+          {tabs.map(({ id, label, icon: Icon }) => (
+            <button key={id} onClick={() => setTab(id)} className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-black transition ${tab === id ? 'bg-ink text-white' : 'text-plum'}`}>
+              <Icon className="h-4 w-4" />
+              <span>{label === 'I-Statement' ? 'I-Stmt' : label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }
@@ -183,7 +189,7 @@ function FormattedText({ text }: { text: string }) {
     if (!clean) return <div key={i} className="h-1" />;
     const heading = clean.match(/^\*\*([^*]+)\*\*:?$/);
     if (heading) return <h4 key={i} className="pt-2 text-base font-black text-plum sm:text-lg">{heading[1]}</h4>;
-    if (/^[-*]\s+/.test(clean)) return <p key={i} className="pl-4">• {renderInline(clean.replace(/^[-*]\s+/, ''))}</p>;
+    if (/^[-*•]\s+/.test(clean)) return <p key={i} className="pl-4">• {renderInline(clean.replace(/^[-*•]\s+/, ''))}</p>;
     return <p key={i}>{renderInline(clean)}</p>;
   })}</div>;
 }
