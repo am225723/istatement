@@ -8,34 +8,6 @@ function emptyTone(): ToneResult {
   return { tone: 'waiting', confidence: 0, zone: 'green', color: '#B0B0B0', description: 'Waiting for speech', repairCue: 'Start listening when both people have agreed to use this tool.' };
 }
 
-function elevatedVolumeTone(stats: VolumeStats): ToneResult | null {
-  const loudRatio = stats.samples > 0 ? stats.loudSamples / stats.samples : 0;
-
-  if (stats.peak > 0.46 || stats.average > 0.22 || loudRatio > 0.38) {
-    return {
-      tone: 'raised volume',
-      confidence: 0.86,
-      zone: 'red',
-      color: '#DC143C',
-      description: 'Volume is elevated or sustained. The words may sound calm in the transcript, but the delivery suggests escalation.',
-      repairCue: 'Pause and lower the pace. Try: “I want to keep talking, but I need us to slow down and lower our voices.”'
-    };
-  }
-
-  if (stats.peak > 0.34 || stats.average > 0.16 || loudRatio > 0.22) {
-    return {
-      tone: 'heated',
-      confidence: 0.76,
-      zone: 'yellow',
-      color: '#FF8C00',
-      description: 'Volume is rising. The conversation may be getting more activated even if the words are neutral.',
-      repairCue: 'Try taking one breath and reflecting back what you heard before responding.'
-    };
-  }
-
-  return null;
-}
-
 type VolumeStats = {
   average: number;
   peak: number;
@@ -45,6 +17,44 @@ type VolumeStats = {
 
 function emptyVolumeStats(): VolumeStats {
   return { average: 0, peak: 0, samples: 0, loudSamples: 0 };
+}
+
+const HEATED_AVG = 0.26;
+const HEATED_PEAK = 0.62;
+const HEATED_RATIO = 0.55;
+const RAISED_AVG = 0.36;
+const RAISED_PEAK = 0.82;
+const RAISED_RATIO = 0.78;
+
+function elevatedVolumeTone(stats: VolumeStats): ToneResult | null {
+  const loudRatio = stats.samples > 0 ? stats.loudSamples / stats.samples : 0;
+
+  const raisedSignals = [stats.average > RAISED_AVG, stats.peak > RAISED_PEAK, loudRatio > RAISED_RATIO].filter(Boolean).length;
+  const heatedSignals = [stats.average > HEATED_AVG, stats.peak > HEATED_PEAK, loudRatio > HEATED_RATIO].filter(Boolean).length;
+
+  if (raisedSignals >= 2) {
+    return {
+      tone: 'raised volume',
+      confidence: 0.82,
+      zone: 'red',
+      color: '#DC143C',
+      description: 'Volume appears clearly elevated and sustained. The words may sound calmer in the transcript than the delivery feels.',
+      repairCue: 'Pause and lower the pace. Try: “I want to keep talking, but I need us to slow down and lower our voices.”'
+    };
+  }
+
+  if (heatedSignals >= 2) {
+    return {
+      tone: 'heated',
+      confidence: 0.7,
+      zone: 'yellow',
+      color: '#FF8C00',
+      description: 'Volume may be rising. The conversation could be getting more activated even if the words are neutral.',
+      repairCue: 'Try taking one breath and reflecting back what you heard before responding.'
+    };
+  }
+
+  return null;
 }
 
 export function LiveTonePanel() {
@@ -85,7 +95,7 @@ export function LiveTonePanel() {
     const source = audioContext.createMediaStreamSource(stream);
     const analyser = audioContext.createAnalyser();
     analyser.fftSize = 1024;
-    analyser.smoothingTimeConstant = 0.65;
+    analyser.smoothingTimeConstant = 0.8;
     source.connect(analyser);
     audioContextRef.current = audioContext;
     analyserRef.current = analyser;
@@ -112,7 +122,7 @@ export function LiveTonePanel() {
         samples: nextSamples,
         average: (stats.average * stats.samples + rms) / nextSamples,
         peak: Math.max(stats.peak, peak),
-        loudSamples: stats.loudSamples + (rms > 0.16 || peak > 0.34 ? 1 : 0)
+        loudSamples: stats.loudSamples + (rms > HEATED_AVG && peak > HEATED_PEAK ? 1 : 0)
       };
 
       volumeAnimationRef.current = window.requestAnimationFrame(tick);
@@ -213,7 +223,7 @@ export function LiveTonePanel() {
   }
 
   const zoneLabel = tone.zone === 'red' ? 'High friction' : tone.zone === 'yellow' ? 'Activated' : 'Workable';
-  const volumePercent = Math.min(100, Math.round(volumeLevel * 260));
+  const volumePercent = Math.min(100, Math.round(volumeLevel * 150));
   const lastLoudRatio = lastVolumeStats.samples > 0 ? Math.round((lastVolumeStats.loudSamples / lastVolumeStats.samples) * 100) : 0;
 
   return (
@@ -245,7 +255,7 @@ export function LiveTonePanel() {
           <div className="mt-4">
             <div className="flex justify-between text-xs font-black uppercase tracking-[0.16em] text-plum"><span>Vocal intensity</span><span>{volumePercent}%</span></div>
             <div className="mt-2 h-3 overflow-hidden rounded-full bg-lavender"><div className="h-full rounded-full bg-rose transition-all" style={{ width: `${volumePercent}%` }} /></div>
-            <p className="mt-2 text-xs text-slate-500">Last chunk loudness: avg {lastVolumeStats.average.toFixed(2)}, peak {lastVolumeStats.peak.toFixed(2)}, elevated {lastLoudRatio}%</p>
+            <p className="mt-2 text-xs text-slate-500">Last chunk: avg {lastVolumeStats.average.toFixed(2)}, peak {lastVolumeStats.peak.toFixed(2)}, elevated {lastLoudRatio}%</p>
           </div>
         </div>
 
